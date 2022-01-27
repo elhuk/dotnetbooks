@@ -1,0 +1,24 @@
+#!csharp
+
+using static System.Console;
+
+// statement lambda
+Action<List<string>> print = 
+    list => WriteLine(string.Join(',', list));
+
+// state objects
+List<string> names = 
+    new(new List<string> { "Name1", "Name2", "Name3"});
+
+// output
+print(names)
+
+#!csharp
+
+using System.Net.Http;
+
+var dataUrl = "https://data.cityofchicago.org/resource/4i42-qv3h.json";
+
+var data = await new HttpClient().GetStringAsync(dataUrl); 
+
+data
