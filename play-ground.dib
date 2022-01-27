@@ -22,3 +22,18 @@ var dataUrl = "https://data.cityofchicago.org/resource/4i42-qv3h.json";
 var data = await new HttpClient().GetStringAsync(dataUrl); 
 
 data
+
+#!markdown
+
+### Handling input from the user
+
+#!csharp
+
+var inputStockGroup = 
+    await GetInputAsync("Enter stock group");
+WriteLine(inputStockGroup);
+
+var price = 
+    await GetInputAsync("Enter stock price");
+var inputStockPrice = Convert.ToDecimal(price);
+WriteLine(inputStockPrice);
