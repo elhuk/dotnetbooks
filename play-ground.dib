@@ -100,6 +100,8 @@ persist.WriteToFile(journal, filename, true);
 
 #!csharp
 
+using static System.Console;
+
 public enum Color { Red, Green, Blue, Black, White }
 public enum Size { Small, Medium, Large, XL }
 
@@ -120,7 +122,7 @@ public class Product
 
 public interface IFilterSpecification<T>
 {
-    bool IsSatisfied(T t);
+    bool IsSatisfiedByItem(T t);
 }
 public interface IFilter<T>
 {
@@ -135,9 +137,19 @@ public class FilterByColorSpec : IFilterSpecification<Product>
         this.color = color;
     }
 
-    public bool IsSatisfied(Product p)
+    public bool IsSatisfiedByItem(Product p)
     {
         return p.Color == color;
+    }
+}
+
+public class BetterFilter : IFilter<Product>
+{
+    public IEnumerable<Product> Filter(IEnumerable<Product> products, IFilterSpecification<Product> spec)
+    {
+        return products
+            .Where(item => spec.IsSatisfiedByItem(item))
+            .ToList();
     }
 }
 
@@ -146,3 +158,8 @@ var tree = new Product("Tree", Color.Green, Size.Large);
 var house = new Product("House", Color.White, Size.XL);
 
 Product[] products = { apple, tree, house };
+var filter = new BetterFilter();
+
+WriteLine("Green products:");
+foreach(var item in filter.Filter(products, new FilterByColorSpec(Color.Green)))
+    WriteLine($" - {item.Name} is {item.Color}");
