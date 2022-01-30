@@ -52,9 +52,9 @@ using System.IO;
 using System.Diagnostics;
 using static System.Console;
 
+// journal entry responsibility
 public class Journal
 {
-    // journal entry responsibility
     private readonly List<string> entries = new();
     private static int entryId = 1;
 
@@ -73,9 +73,9 @@ public class Journal
 // journal printing responsibility
 Action<Journal> print = journal => WriteLine(string.Join(Environment.NewLine, journal));
 
+// journal persistence responsibility 
 public class Persistence
 {
-    // journal persistence 
     public void WriteToFile(Journal journal, string filename, bool overwrite = false)
     {
         if (overwrite || !File.Exists(filename))
@@ -103,11 +103,12 @@ persist.WriteToFile(journal, filename, true);
 using static System.Console;
 
 public enum Color { Red, Green, Blue, Black, White }
-public enum Size { Small, Medium, Large, XL }
+public enum Size { Small, Medium, Large, Huge }
+public enum Operator { AND, OR }
 
+// product model responsibility
 public class Product
 {
-    // product model responsibility
     public string Name;
     public Color Color;
     public Size Size;
@@ -120,15 +121,18 @@ public class Product
     }
 }
 
+// filter specification abstruction
 public interface IFilterSpecification<T>
 {
     bool IsSatisfiedByItem(T t);
 }
+// filter interface abstruction
 public interface IFilter<T>
 {
     IEnumerable<T> Filter(IEnumerable<T> items, IFilterSpecification<T> specs);
 }
 
+// color filter specification implementation
 public class FilterByColorSpec : IFilterSpecification<Product>
 {
     private Color color;
@@ -137,13 +141,44 @@ public class FilterByColorSpec : IFilterSpecification<Product>
         this.color = color;
     }
 
-    public bool IsSatisfiedByItem(Product p)
+    public bool IsSatisfiedByItem(Product p) => p.Color == color;
+
+}
+// size filter specification implementation
+public class FilterBySizeSpec : IFilterSpecification<Product>
+{
+    private Size size;
+    public FilterBySizeSpec(Size size)
     {
-        return p.Color == color;
+        this.size = size;
+    }
+
+    public bool IsSatisfiedByItem(Product p) => p.Size == size;
+}
+
+// combination filter abstruction
+public class CombinationFilterSpecification<T> : IFilterSpecification<T>
+{
+    private IFilterSpecification<T> first, second;
+    private Operator op;
+    public CombinationFilterSpecification(IFilterSpecification<T> first, IFilterSpecification<T> second, Operator op)
+    {
+        this.first = first ?? throw new ArgumentNullException(nameof(first));
+        this.second = second ?? throw new ArgumentNullException(nameof(second));
+        this.op = op;
+    }
+      
+    public bool IsSatisfiedByItem(T t)
+    {
+
+        return op == Operator.AND ? 
+            first.IsSatisfiedByItem(t) && second.IsSatisfiedByItem(t) :
+            first.IsSatisfiedByItem(t) || second.IsSatisfiedByItem(t);
     }
 }
 
-public class BetterFilter : IFilter<Product>
+// filter implementation
+public class ProductFilter : IFilter<Product>
 {
     public IEnumerable<Product> Filter(IEnumerable<Product> products, IFilterSpecification<Product> spec)
     {
@@ -153,13 +188,34 @@ public class BetterFilter : IFilter<Product>
     }
 }
 
+// Main()
 var apple = new Product("Apple", Color.Green, Size.Small);
 var tree = new Product("Tree", Color.Green, Size.Large);
-var house = new Product("House", Color.White, Size.XL);
+var house = new Product("House", Color.White, Size.Huge);
+var truck = new Product("Truck", Color.White, Size.Huge);
 
-Product[] products = { apple, tree, house };
-var filter = new BetterFilter();
+Product[] products = { apple, tree, house, truck };
+var filter = new ProductFilter();
 
+// find products with green color
 WriteLine("Green products:");
-foreach(var item in filter.Filter(products, new FilterByColorSpec(Color.Green)))
+foreach
+    (var item in filter.Filter(products, 
+        new FilterByColorSpec(Color.Green)
+    ))
+{
     WriteLine($" - {item.Name} is {item.Color}");
+}
+
+// find products that are white and huge
+WriteLine("Huge white products:");
+foreach
+    (var item in filter.Filter(products,
+        new CombinationFilterSpecification<Product>(
+            new FilterByColorSpec(Color.White),
+            new FilterBySizeSpec(Size.Huge),
+            Operator.AND
+    )))
+{
+    WriteLine($" - {item.Name} is {item.Color}");
+}
