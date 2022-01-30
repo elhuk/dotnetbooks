@@ -216,3 +216,63 @@ foreach
 {
     WriteLine($" - {item.Name} is {item.Color}");
 }
+
+#!markdown
+
+### Dependecy Invesion Principle
+high-level code should not DIRECTLY depend on low-level code implementation.<br/>
+an abstruction should be used to provide integration api to the low-level code
+
+#!csharp
+
+using static System.Console;
+
+public enum Relationship { ParentOf, ChildOf }
+
+public class Person { public string Name; }
+
+public interface IRelationshipService
+{
+    void AddRelationship(Person p1, Relationship r, Person p2);
+    IEnumerable<Person> FindRelations(Relationship r, string name);
+}
+
+// low-level code
+public class Relationships : IRelationshipService
+{
+    private List<(Person, Relationship, Person)> relations = new();
+
+    public override string ToString() => string.Join(Environment.NewLine, relations);
+
+    public void AddRelationship(Person p1, Relationship r, Person p2)
+    {
+        relations.Add((p1, r, p2));
+        WriteLine("Added relationship...");
+        WriteLine($"{p1.Name}->{r}->{p2.Name}\n");
+    }
+
+    public IEnumerable<Person> FindRelations(Relationship r, string name)
+    {
+        WriteLine($"Searching...for {r} {name}");
+        return 
+            relations
+                .Where(x => x.Item3.Name == name &&
+                            x.Item2 == r)
+                .Select(x => x.Item1)
+                .ToList();
+    }
+}
+
+IRelationshipService svc = new Relationships();
+
+var p = new Person { Name = "John" };
+var c1 = new Person { Name = "Chris" };
+var c2 = new Person { Name = "Mary" };
+
+svc.AddRelationship(c1, Relationship.ChildOf, p);
+svc.AddRelationship(c2, Relationship.ChildOf, p);
+
+foreach(var p in svc.FindRelations(Relationship.ChildOf, "John"))
+{
+    WriteLine($"John has a child called {p.Name}");
+}
