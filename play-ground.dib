@@ -70,9 +70,6 @@ public class Journal
     }
 }
 
-// journal printing responsibility
-Action<Journal> print = journal => WriteLine(string.Join(Environment.NewLine, journal));
-
 // journal persistence responsibility 
 public class Persistence
 {
@@ -86,7 +83,7 @@ public class Persistence
 Journal journal = new();
 journal.AddEntry("I drank mocha this morning");
 journal.AddEntry("I drove kids to school this morning");
-print(journal);
+WriteLine(journal);
 
 // if on osx set permission for vscode to write file: sudo chown -R $(whoami) /Users/$(whoami)/.vscode
 Persistence persist = new();
